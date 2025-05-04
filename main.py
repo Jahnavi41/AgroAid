@@ -140,7 +140,7 @@ def display_gradcam(img_array, heatmap, image, alpha=0.4):
     heatmap = np.uint8(255 * heatmap)
     heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
     superimposed_img = heatmap * alpha + np.array(image)
-    st.image(superimposed_img.astype("uint8"), caption="Grad-CAM Explanation", use_column_width=True)
+    st.image(superimposed_img.astype("uint8"), caption="Grad-CAM Explanation", use_container_width=True)
 
 # Sidebar
 st.sidebar.title("🌱 AgroAid Dashboard")
@@ -167,7 +167,7 @@ elif app_mode == "Disease Recognition":
     test_image = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
 
     if test_image:
-        st.image(test_image, caption="Uploaded Image", use_column_width=True)
+        st.image(test_image, caption="Uploaded Image", use_container_width=True)
 
         if st.button("Predict"):
             model_path = MODEL_PATHS[model_choice]
