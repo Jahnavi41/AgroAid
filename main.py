@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import classification_report, confusion_matrix
 import os
+import pandas as pd
+from io import BytesIO
+from PIL import Image
 
 # Load disease info JSON
 with open("disease_info.json", "r") as f:
@@ -193,40 +196,89 @@ elif app_mode == "Evaluation":
                 plt.ylabel("True")
                 plt.title(f"Confusion Matrix for {model_name}")
                 st.pyplot(fig)
-if app_mode == "Model Comparison":
-    st.header("🤖 Model Comparison Dashboard")
-    selected_models = st.multiselect("Choose Models for Comparison", list(MODEL_PATHS.keys()), default=list(MODEL_PATHS.keys())[:2])
-    uploaded_files = st.file_uploader("Upload Images for Comparison", accept_multiple_files=True, type=["jpg", "jpeg", "png"])
+# Add this inside your Streamlit app under a new page: "Model Comparison"
+
+elif app_mode == "Model Comparison":
+    st.header("🤖 Model Comparison")
+    selected_models = st.multiselect("Select Models to Compare", list(MODEL_PATHS.keys()), default=list(MODEL_PATHS.keys())[:2])
+    uploaded_files = st.file_uploader("Upload Images for Comparison", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
     if uploaded_files and selected_models:
-        comparison_data = {}
+        results = []
+
+        st.subheader("📋 Prediction Results")
+        progress = st.progress(0)
+        total_ops = len(uploaded_files) * len(selected_models)
+        op_count = 0
+
+        for img_file in uploaded_files:
+            img_name = img_file.name
+            st.markdown(f"**Image:** `{img_name}`")
+            img_display = st.image(img_file, width=200)
+
+            row_data = {"Image": img_name}
+
+            for model_name in selected_models:
+                model_path = MODEL_PATHS[model_name]
+                model = load_model(model_path)
+                if model is None:
+                    row_data[model_name] = "(PyTorch model not supported)"
+                    continue
+
+                target_size = MODEL_INPUT_SIZES[model_name]
+                result_index, confidence, input_arr, pil_img = model_prediction(img_file, model, target_size)
+                pred_label = class_name[result_index]
+                row_data[model_name] = f"{pred_label} ({confidence * 100:.2f}%)"
+                op_count += 1
+                progress.progress(op_count / total_ops)
+
+            results.append(row_data)
+
+        df_results = pd.DataFrame(results)
+        st.dataframe(df_results, use_container_width=True)
+
+        csv = df_results.to_csv(index=False).encode("utf-8")
+        st.download_button("📥 Download Results as CSV", data=csv, file_name="model_comparison_results.csv", mime="text/csv")
+
+        # Bar Chart for visual analysis
+        st.subheader("📊 Prediction Confidence Comparison")
+        for row in results:
+            img_name = row["Image"]
+            st.markdown(f"#### 📸 `{img_name}`")
+            confidences = []
+            labels = []
+            for model_name in selected_models:
+                value = row[model_name]
+                if "(" in value:
+                    label, conf = value.rsplit("(", 1)
+                    conf = float(conf.replace("%)", ""))
+                    confidences.append(conf)
+                    labels.append(model_name + ": " + label.strip())
+            fig, ax = plt.subplots()
+            ax.barh(labels, confidences, color="skyblue")
+            ax.set_xlim(0, 100)
+            ax.set_xlabel("Confidence (%)")
+            ax.set_title("Confidence Comparison")
+            st.pyplot(fig)
+
+        # Optional Grad-CAM visuals for one image and all models
+        st.subheader("🧠 Grad-CAM Visualization (First Image)")
+        first_image = uploaded_files[0]
         for model_name in selected_models:
-            st.subheader(f"📘 Results from {model_name}")
-            model = load_model(MODEL_PATHS[model_name])
+            st.markdown(f"##### 🔍 {model_name}")
+            model_path = MODEL_PATHS[model_name]
+            model = load_model(model_path)
             if model is None:
-                st.warning(f"⚠️ Skipping {model_name} - not supported.")
+                st.warning("PyTorch models not supported for Grad-CAM")
                 continue
             target_size = MODEL_INPUT_SIZES[model_name]
+            result_index, confidence, input_arr, pil_img = model_prediction(first_image, model, target_size)
+            try:
+                heatmap = make_gradcam_heatmap(input_arr, model, GRAD_CAM_LAYERS[model_name])
+                display_gradcam(input_arr, heatmap, pil_img)
+            except Exception as e:
+                st.warning(f"Grad-CAM failed for {model_name}: {e}")
 
-            model_results = []
-            for f in uploaded_files:
-                result_index, confidence, input_arr, image = model_prediction(f, model, target_size)
-                predicted = class_name[result_index]
-                model_results.append((os.path.basename(f.name), predicted, confidence))
-            comparison_data[model_name] = model_results
-
-        # Display Comparison Table
-        st.subheader("📊 Comparative Results")
-        for i, image in enumerate(uploaded_files):
-            st.markdown(f"### 🖼️ Image: {os.path.basename(image.name)}")
-            cols = st.columns(len(selected_models))
-            for idx, model_name in enumerate(selected_models):
-                predicted, confidence = comparison_data[model_name][i][1:]
-                with cols[idx]:
-                    st.markdown(f"**Model:** {model_name}")
-                    st.markdown(f"**Prediction:** {predicted}")
-                    st.markdown(f"**Confidence:** `{confidence * 100:.2f}%`")
-            st.markdown("---")
 
 # Footer
 st.markdown("---")
