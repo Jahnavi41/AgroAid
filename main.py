@@ -16,6 +16,7 @@ from reportlab.lib.utils import ImageReader
 from io import BytesIO
 from PIL import Image
 
+
 def generate_pdf(results_data):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
@@ -63,7 +64,7 @@ MODEL_PATHS = {
     "CNN (Default)": "trained_model_cnn.keras",
     "EfficientNetB3 (Transfer Learning)": "trained_model_EfficientNetB3.h5",
     "VGG16 (Transfer Learning)": "training_model_VGG16.keras",
-    "ResNet50 (Transfer Learning)": "trained_model_resnet99.pth"  # Skipped in evaluation
+    "ResNet50 (Transfer Learning)": "resnet_model.keras"  
 }
 
 # Input sizes per model
@@ -142,6 +143,19 @@ def display_gradcam(img_array, heatmap, image, alpha=0.4):
     superimposed_img = heatmap * alpha + np.array(image)
     st.image(superimposed_img.astype("uint8"), caption="Grad-CAM Explanation", use_container_width=True)
 
+def display_gradcam_for_pdf(img_array, heatmap, image, alpha=0.4):
+    # Resize the heatmap to match the image size
+    heatmap = cv2.resize(heatmap, (image.size[0], image.size[1]))
+    heatmap = np.uint8(255 * heatmap)
+    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    
+    # Superimpose heatmap onto image
+    superimposed_img = heatmap * alpha + np.array(image)
+    superimposed_img = np.clip(superimposed_img, 0, 255).astype("uint8")
+    
+    return Image.fromarray(superimposed_img)
+
+
 # Sidebar
 st.sidebar.title("🌱 AgroAid Dashboard")
 app_mode = st.sidebar.selectbox("Select Page", ["Home", "About", "Disease Recognition", "Evaluation", "Model Comparison"])
@@ -192,12 +206,27 @@ elif app_mode == "Disease Recognition":
 
                 st.subheader("🧠 Grad-CAM Explanation")
                 try:
-                    last_conv_layer = GRAD_CAM_LAYERS.get(model_choice, "conv2d_9")
-                    heatmap = make_gradcam_heatmap(input_arr, model, last_conv_layer)
-                    display_gradcam(input_arr, heatmap, pil_img)
+                    last_conv_layer = GRAD_CAM_LAYERS.get(model_choice)
+                    if last_conv_layer in [layer.name for layer in model.layers]:
+                        try:
+                            heatmap = make_gradcam_heatmap(input_arr, model, last_conv_layer)
+                            
+                            # Display Grad-CAM for user
+                            display_gradcam(input_arr, heatmap, pil_img)
+                            
+                            # Generate and save Grad-CAM image
+                            gradcam_image_path = f"temp_gradcam_{model_choice}_{test_image.name}"
+                            grad_img = display_gradcam_for_pdf(input_arr, heatmap, pil_img)  # helper function to get image
+                            grad_img.save(gradcam_image_path)
+                            
+                        except Exception as e:
+                            st.warning(f"⚠️ Grad-CAM failed for {model_choice}: {e}")
+                    else:
+                        st.info(f"ℹ️ Grad-CAM not available for {model_choice} (layer `{last_conv_layer}` not found).")
                 except Exception as e:
                     print(model.summary())
                     st.warning(f"⚠️ Grad-CAM failed: {e}")
+
                 
 
 # Evaluation
@@ -307,8 +336,10 @@ elif app_mode == "Model Comparison":
             st.pyplot(fig)
 
         # Optional Grad-CAM visuals for one image and all models
+        # Optional Grad-CAM visuals for one image and all models
         st.subheader("🧠 Grad-CAM Visualization (First Image)")
         first_image = uploaded_files[0]
+
         for model_name in selected_models:
             st.markdown(f"##### 🔍 {model_name}")
             model_path = MODEL_PATHS[model_name]
@@ -316,36 +347,57 @@ elif app_mode == "Model Comparison":
             if model is None:
                 st.warning("PyTorch models not supported for Grad-CAM")
                 continue
+
             target_size = MODEL_INPUT_SIZES[model_name]
             result_index, confidence, input_arr, pil_img = model_prediction(first_image, model, target_size)
-            try:
-                heatmap = make_gradcam_heatmap(input_arr, model, GRAD_CAM_LAYERS[model_name])
-                display_gradcam(input_arr, heatmap, pil_img)
-            except Exception as e:
-                st.warning(f"Grad-CAM failed for {model_name}: {e}")
+
+            last_conv_layer = GRAD_CAM_LAYERS.get(model_name)
+            available_layers = [layer.name for layer in model.layers]
+
+            if last_conv_layer in available_layers:
+                try:
+                    heatmap = make_gradcam_heatmap(input_arr, model, last_conv_layer)
+                    display_gradcam(input_arr, heatmap, pil_img)
+                except Exception as e:
+                    st.warning(f"⚠️ Grad-CAM failed for {model_name}: {e}")
+            else:
+                st.info(f"ℹ️ Grad-CAM not available for {model_name} (layer `{last_conv_layer}` not found).")
+
         
         # PDF Download section (after Grad-CAM visualization)
+        # Add this inside your Streamlit app after the results are prepared
         st.subheader("📄 Download PDF Report")
         pdf_data = []
+
+        # Ensure results are populated before creating the PDF
         for i, img in enumerate(uploaded_files):
             predictions = {}
+
+            # Save uploaded image temporarily
+            img_path = f"temp_uploaded_{img.name}"
+            with open(img_path, "wb") as f:
+                f.write(img.getbuffer())
+
+            # Loop through selected models and make predictions
             for model_name in selected_models:
                 pred_label = results[i][model_name].split('(')[0].strip()  # Extract label
                 confidence = float(results[i][model_name].split('(')[1].replace("%)", "").strip()) / 100.0  # Extract confidence
                 predictions[model_name] = {"label": pred_label, "confidence": confidence}
-            
-            # If Grad-CAM exists
-            gradcam_image_path = f"/path/to/gradcam/{img.name}"  # Adjust to your path
+
+            # Append the data to pdf_data (without Grad-CAM)
             pdf_data.append({
                 "filename": img.name,
-                "image_path": img,
+                "image_path": img_path,  # use saved path
                 "predictions": predictions,
-                "gradcam": gradcam_image_path  # Optional Grad-CAM image path
             })
 
-        # Generate and offer PDF download
-        pdf_file = generate_pdf(pdf_data)
-        st.download_button("📄 Download PDF Report", data=pdf_file, file_name="model_comparison_report.pdf", mime="application/pdf")
+        # Check if pdf_data is not empty before generating PDF
+        if pdf_data:
+            pdf_file = generate_pdf(pdf_data)
+            st.download_button("📥 Download PDF Report", pdf_file, file_name="model_comparison_results.pdf", mime="application/pdf")
+        else:
+            st.warning("No data available to generate PDF.")
+
 
 
 
