@@ -17,7 +17,7 @@ MODEL_PATHS = {
     "CNN (Default)": "trained_model_cnn.keras",
     "EfficientNetB3 (Transfer Learning)": "trained_model_EfficientNetB3.h5",
     "VGG16 (Transfer Learning)": "training_model_VGG16.keras",
-    "ResNet50 (Transfer Learning)": "trained_model_resnet99.pth"
+    "ResNet50 (Transfer Learning)": "trained_model_resnet99.pth"  # Skipped in evaluation
 }
 
 # Input sizes per model
@@ -37,7 +37,7 @@ GRAD_CAM_LAYERS = {
 }
 
 # Class labels
-class_name = [
+class_name = [  # trimmed for brevity if needed
     'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
     'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 'Cherry_(including_sour)___healthy',
     'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 'Corn_(maize)___Common_rust_',
@@ -53,18 +53,18 @@ class_name = [
     'Tomato___healthy'
 ]
 
-# Load model based on file extension
+# Load model
 @st.cache_resource
 def load_model(path):
     ext = os.path.splitext(path)[1]
     if ext in [".keras", ".h5"]:
         return tf.keras.models.load_model(path)
     elif ext == ".pth":
-        return None  # Placeholder for unsupported PyTorch model
+        return None
     else:
         raise ValueError("Unsupported model file type")
 
-# Predict image class
+# Predict
 def model_prediction(test_image, model, target_size):
     image = tf.keras.preprocessing.image.load_img(test_image, target_size=target_size)
     input_arr = tf.keras.preprocessing.image.img_to_array(image)
@@ -72,7 +72,7 @@ def model_prediction(test_image, model, target_size):
     predictions = model.predict(input_arr)
     return np.argmax(predictions), np.max(predictions), input_arr, image
 
-# Grad-CAM generation
+# Grad-CAM
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
     grad_model = tf.keras.models.Model([model.inputs], [model.get_layer(last_conv_layer_name).output, model.output])
     with tf.GradientTape() as tape:
@@ -88,7 +88,7 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
     heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
     return heatmap.numpy()
 
-# Display heatmap on image
+# Grad-CAM overlay
 def display_gradcam(img_array, heatmap, image, alpha=0.4):
     heatmap = cv2.resize(heatmap, (image.size[0], image.size[1]))
     heatmap = np.uint8(255 * heatmap)
@@ -98,29 +98,23 @@ def display_gradcam(img_array, heatmap, image, alpha=0.4):
 
 # Sidebar
 st.sidebar.title("🌱 AgroAid Dashboard")
-app_mode = st.sidebar.selectbox("Select Page", ["Home", "About", "Disease Recognition", "Evaluation"])
+app_mode = st.sidebar.selectbox("Select Page", ["Home", "About", "Disease Recognition", "Evaluation", "Model Comparison"])
 
-# Home Page
+# Home
 if app_mode == "Home":
-    st.header("PLANT DISEASE RECOGNITION SYSTEM")
+    st.header("🌾 Plant Disease Recognition System")
     st.image("home.jpeg", use_container_width=True)
-    st.markdown("""
-    Welcome to AgroAid! Upload a plant leaf image, and our AI will diagnose the disease and suggest remedies.
-    Navigate to **Disease Recognition** to try it out!
-    """)
+    st.markdown("Upload a plant leaf image, and our AI will detect disease and suggest treatment.")
 
-# About Page
+# About
 elif app_mode == "About":
-    st.header("About")
+    st.header("📖 About AgroAid")
     st.markdown("""
-    #### Dataset Source
-    [Kaggle - New Plant Disease Dataset](https://www.kaggle.com/datasets/vipoooool/new-plant-diseases-dataset)
-
-    #### Purpose
-    This tool helps farmers and researchers identify crop diseases early and take action.
+    **Dataset:** [Kaggle - New Plant Disease Dataset](https://www.kaggle.com/datasets/vipoooool/new-plant-diseases-dataset)  
+    **Purpose:** Assist farmers with early disease detection and intervention using AI.  
     """)
 
-# Disease Recognition Page
+# Recognition
 elif app_mode == "Disease Recognition":
     st.header("📸 Upload Plant Image")
     model_choice = st.selectbox("Choose Model", list(MODEL_PATHS.keys()))
@@ -134,7 +128,7 @@ elif app_mode == "Disease Recognition":
             model = load_model(model_path)
 
             if model is None:
-                st.error("⚠️ PyTorch (.pth) model loading not supported in this app.")
+                st.error("⚠️ PyTorch (.pth) model not supported yet.")
             else:
                 target_size = MODEL_INPUT_SIZES[model_choice]
                 result_index, confidence, input_arr, pil_img = model_prediction(test_image, model, target_size)
@@ -156,37 +150,84 @@ elif app_mode == "Disease Recognition":
                     heatmap = make_gradcam_heatmap(input_arr, model, last_conv_layer)
                     display_gradcam(input_arr, heatmap, pil_img)
                 except Exception as e:
-                    st.warning(f"⚠️ Could not generate Grad-CAM. Error: {e}")
+                    st.warning(f"⚠️ Grad-CAM failed: {e}")
 
-# Evaluation Page
+# Evaluation
 elif app_mode == "Evaluation":
     st.header("📊 Model Evaluation")
-    st.markdown("Upload a batch of images to see how well the model performs.")
+    st.markdown("Upload test images (filenames must include true label)")
+
     uploaded_files = st.file_uploader("Upload Multiple Images", accept_multiple_files=True, type=["jpg", "jpeg", "png"])
-    true_labels = []
-    pred_labels = []
 
-    if uploaded_files and st.button("Evaluate"):
-        model = load_model(MODEL_PATHS["CNN (Default)"])
-        if model is None:
-            st.error("CNN model could not be loaded.")
-        else:
-            target_size = MODEL_INPUT_SIZES["CNN (Default)"]
+    if uploaded_files and st.button("Evaluate All Models"):
+        valid_models = [m for m in MODEL_PATHS if not MODEL_PATHS[m].endswith(".pth")]
+        tabs = st.tabs(valid_models)
+
+        for i, model_name in enumerate(valid_models):
+            with tabs[i]:
+                st.subheader(f"🔍 Evaluating {model_name}")
+                model = load_model(MODEL_PATHS[model_name])
+                target_size = MODEL_INPUT_SIZES[model_name]
+
+                true_labels = []
+                pred_labels = []
+
+                for f in uploaded_files:
+                    true_label = f.name.split("_")[0]
+                    pred_idx, _, _, _ = model_prediction(f, model, target_size)
+                    predicted_class = class_name[pred_idx].split("___")[0]
+                    true_labels.append(true_label)
+                    pred_labels.append(predicted_class)
+
+                # Report
+                st.text("Classification Report:")
+                st.code(classification_report(true_labels, pred_labels), language='text')
+
+                # Confusion matrix
+                st.markdown("### Confusion Matrix")
+                labels = sorted(list(set(true_labels)))
+                cm = confusion_matrix(true_labels, pred_labels, labels=labels)
+                fig, ax = plt.subplots(figsize=(10, 6))
+                sns.heatmap(cm, annot=True, fmt="d", cmap="YlGnBu", xticklabels=labels, yticklabels=labels)
+                plt.xlabel("Predicted")
+                plt.ylabel("True")
+                plt.title(f"Confusion Matrix for {model_name}")
+                st.pyplot(fig)
+if app_mode == "Model Comparison":
+    st.header("🤖 Model Comparison Dashboard")
+    selected_models = st.multiselect("Choose Models for Comparison", list(MODEL_PATHS.keys()), default=list(MODEL_PATHS.keys())[:2])
+    uploaded_files = st.file_uploader("Upload Images for Comparison", accept_multiple_files=True, type=["jpg", "jpeg", "png"])
+
+    if uploaded_files and selected_models:
+        comparison_data = {}
+        for model_name in selected_models:
+            st.subheader(f"📘 Results from {model_name}")
+            model = load_model(MODEL_PATHS[model_name])
+            if model is None:
+                st.warning(f"⚠️ Skipping {model_name} - not supported.")
+                continue
+            target_size = MODEL_INPUT_SIZES[model_name]
+
+            model_results = []
             for f in uploaded_files:
-                label = f.name.split("_")[0]
-                result_index, _, _, _ = model_prediction(f, model, target_size)
-                true_labels.append(label)
-                pred_labels.append(class_name[result_index].split("___")[0])
+                result_index, confidence, input_arr, image = model_prediction(f, model, target_size)
+                predicted = class_name[result_index]
+                model_results.append((os.path.basename(f.name), predicted, confidence))
+            comparison_data[model_name] = model_results
 
-            st.text("Classification Report:")
-            st.text(classification_report(true_labels, pred_labels))
+        # Display Comparison Table
+        st.subheader("📊 Comparative Results")
+        for i, image in enumerate(uploaded_files):
+            st.markdown(f"### 🖼️ Image: {os.path.basename(image.name)}")
+            cols = st.columns(len(selected_models))
+            for idx, model_name in enumerate(selected_models):
+                predicted, confidence = comparison_data[model_name][i][1:]
+                with cols[idx]:
+                    st.markdown(f"**Model:** {model_name}")
+                    st.markdown(f"**Prediction:** {predicted}")
+                    st.markdown(f"**Confidence:** `{confidence * 100:.2f}%`")
+            st.markdown("---")
 
-            cm = confusion_matrix(true_labels, pred_labels, labels=list(set(true_labels)))
-            fig, ax = plt.subplots(figsize=(10, 8))
-            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=list(set(true_labels)), yticklabels=list(set(true_labels)))
-            plt.xlabel("Predicted")
-            plt.ylabel("True")
-            st.pyplot(fig)
-
+# Footer
 st.markdown("---")
-st.caption("Built with ❤️ by AgroAid Team")
+st.caption("🚀 Built with ❤️ by AgroAid Team")
