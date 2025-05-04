@@ -1,0 +1,193 @@
+{
+    "Apple___Apple_scab": {
+      "description": "A fungal disease caused by Venturia inaequalis resulting in dark lesions on leaves and fruit.",
+      "treatment": "Apply fungicides containing captan or myclobutanil.",
+      "prevention": "Ensure proper pruning, remove fallen leaves, use disease-resistant cultivars."
+    },
+    "Apple___Black_rot": {
+      "description": "A fungal disease causing cankers on branches and fruit rot, common in humid conditions.",
+      "treatment": "Use fungicides like thiophanate-methyl; remove infected branches.",
+      "prevention": "Avoid overhead watering; sanitize tools and remove plant debris."
+    },
+    "Apple___Cedar_apple_rust": {
+      "description": "Caused by the fungus Gymnosporangium juniperi-virginianae; requires both apple and cedar hosts.",
+      "treatment": "Apply fungicides like mancozeb or myclobutanil early in the season.",
+      "prevention": "Remove nearby cedar trees if possible; use resistant apple varieties."
+    },
+    "Apple___healthy": {
+      "description": "The apple leaf appears healthy with no visible signs of disease.",
+      "treatment": "None needed.",
+      "prevention": "Maintain regular watering, pruning, and pest control."
+    },
+    "Blueberry___healthy": {
+      "description": "Blueberry plant shows no visible disease symptoms.",
+      "treatment": "None needed.",
+      "prevention": "Ensure proper soil pH, regular watering, and pest monitoring."
+    },
+    "Cherry_(including_sour)___Powdery_mildew": {
+      "description": "Fungal disease causing white powdery growth on leaves and stems.",
+      "treatment": "Apply sulfur-based or potassium bicarbonate fungicides.",
+      "prevention": "Ensure good air circulation and avoid overhead watering."
+    },
+    "Cherry_(including_sour)___healthy": {
+      "description": "Healthy cherry plant with no visible disease.",
+      "treatment": "None required.",
+      "prevention": "Monitor for early signs of mildew and prune regularly."
+    },
+    "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+      "description": "Fungal disease causing rectangular lesions on leaves.",
+      "treatment": "Use fungicides like strobilurins or triazoles.",
+      "prevention": "Practice crop rotation; use resistant hybrids."
+    },
+    "Corn_(maize)___Common_rust_": {
+      "description": "Fungal disease causing brown pustules on leaves.",
+      "treatment": "Apply fungicides during early infection stages.",
+      "prevention": "Plant resistant varieties; avoid excessive nitrogen."
+    },
+    "Corn_(maize)___Northern_Leaf_Blight": {
+      "description": "Fungal disease producing long, gray-green lesions on leaves.",
+      "treatment": "Fungicide application during early symptoms.",
+      "prevention": "Use resistant varieties; rotate crops."
+    },
+    "Corn_(maize)___healthy": {
+      "description": "No signs of leaf blight or rust; healthy plant.",
+      "treatment": "None required.",
+      "prevention": "Maintain nutrient balance and monitor field regularly."
+    },
+    "Grape___Black_rot": {
+      "description": "Fungal disease causing black spots on leaves and fruit.",
+      "treatment": "Use fungicides like captan and myclobutanil.",
+      "prevention": "Remove mummified fruits; ensure proper vine spacing."
+    },
+    "Grape___Esca_(Black_Measles)": {
+      "description": "A complex fungal disease leading to leaf scorching and berry spots.",
+      "treatment": "Remove infected vines; apply systemic fungicides if needed.",
+      "prevention": "Avoid vine injuries and ensure proper drainage."
+    },
+    "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)": {
+      "description": "Caused by Isariopsis fungus; leads to necrotic spots and leaf fall.",
+      "treatment": "Apply copper-based fungicides.",
+      "prevention": "Increase airflow and reduce humidity around plants."
+    },
+    "Grape___healthy": {
+      "description": "No signs of disease; healthy grapevine.",
+      "treatment": "None required.",
+      "prevention": "Regular maintenance and monitoring."
+    },
+    "Orange___Haunglongbing_(Citrus_greening)": {
+      "description": "Bacterial disease spread by psyllids; causes yellow shoots and misshapen fruit.",
+      "treatment": "No cure; remove infected trees and control psyllids.",
+      "prevention": "Use certified disease-free seedlings; monitor for psyllid activity."
+    },
+    "Peach___Bacterial_spot": {
+      "description": "Caused by Xanthomonas; leads to small, water-soaked spots on leaves and fruits.",
+      "treatment": "Use copper-based bactericides; prune affected areas.",
+      "prevention": "Avoid overhead irrigation and select resistant cultivars."
+    },
+    "Peach___healthy": {
+      "description": "No visible bacterial or fungal infection.",
+      "treatment": "None required.",
+      "prevention": "Regular inspection and good cultural practices."
+    },
+    "Pepper,_bell___Bacterial_spot": {
+      "description": "Causes dark, water-soaked lesions on leaves and fruits.",
+      "treatment": "Apply fixed copper sprays early in the season.",
+      "prevention": "Use disease-free seeds and rotate crops."
+    },
+    "Pepper,_bell___healthy": {
+      "description": "Healthy pepper plant with no disease symptoms.",
+      "treatment": "None needed.",
+      "prevention": "Ensure good soil drainage and regular weeding."
+    },
+    "Potato___Early_blight": {
+      "description": "Fungal disease causing concentric ring lesions on leaves.",
+      "treatment": "Use chlorothalonil or mancozeb fungicides.",
+      "prevention": "Remove crop debris and rotate potatoes yearly."
+    },
+    "Potato___Late_blight": {
+      "description": "Serious disease causing leaf and tuber rot, responsible for famines historically.",
+      "treatment": "Use metalaxyl-based fungicides; remove infected plants.",
+      "prevention": "Avoid wet foliage and plant-resistant varieties."
+    },
+    "Potato___healthy": {
+      "description": "Potato plant is disease-free.",
+      "treatment": "None required.",
+      "prevention": "Maintain field hygiene and monitor weather conditions."
+    },
+    "Raspberry___healthy": {
+      "description": "No signs of fungal or bacterial infection on raspberry leaves.",
+      "treatment": "None needed.",
+      "prevention": "Mulch properly and control aphids."
+    },
+    "Soybean___healthy": {
+      "description": "Soybean crop showing no visual disease symptoms.",
+      "treatment": "None required.",
+      "prevention": "Follow IPM strategies and rotate crops."
+    },
+    "Squash___Powdery_mildew": {
+      "description": "White, powdery fungal growth on leaf surfaces.",
+      "treatment": "Apply neem oil or sulfur sprays.",
+      "prevention": "Water at soil level and allow for airflow."
+    },
+    "Strawberry___Leaf_scorch": {
+      "description": "Fungal disease causing red-purple blotches on leaves.",
+      "treatment": "Remove infected leaves and use fungicides as needed.",
+      "prevention": "Avoid crowding and remove old mulch."
+    },
+    "Strawberry___healthy": {
+      "description": "No visible signs of leaf scorch or fungal damage.",
+      "treatment": "None required.",
+      "prevention": "Ensure proper drainage and mulch usage."
+    },
+    "Tomato___Bacterial_spot": {
+      "description": "Bacterial infection causing dark, greasy spots on leaves and fruits.",
+      "treatment": "Use copper-based bactericides early.",
+      "prevention": "Use certified seeds and avoid working with wet plants."
+    },
+    "Tomato___Early_blight": {
+      "description": "Dark concentric spots on older leaves; caused by Alternaria.",
+      "treatment": "Use chlorothalonil or copper sprays.",
+      "prevention": "Prune lower leaves and rotate crops annually."
+    },
+    "Tomato___Late_blight": {
+      "description": "A water mold that causes wilting and gray mold on leaves and stems.",
+      "treatment": "Fungicides like mancozeb or dimethomorph.",
+      "prevention": "Plant resistant varieties and water in the morning."
+    },
+    "Tomato___Leaf_Mold": {
+      "description": "Causes yellow spots and grayish mold underneath leaves.",
+      "treatment": "Improve ventilation and apply sulfur fungicides.",
+      "prevention": "Use drip irrigation and reduce humidity."
+    },
+    "Tomato___Septoria_leaf_spot": {
+      "description": "Small, circular spots with dark borders on leaves.",
+      "treatment": "Use fungicides with chlorothalonil.",
+      "prevention": "Avoid overhead watering and ensure crop rotation."
+    },
+    "Tomato___Spider_mites Two-spotted_spider_mite": {
+      "description": "Tiny mites that cause stippling and webbing on leaves.",
+      "treatment": "Spray with miticides or neem oil.",
+      "prevention": "Increase humidity and wash plants regularly."
+    },
+    "Tomato___Target_Spot": {
+      "description": "Causes target-like concentric spots on leaves and fruits.",
+      "treatment": "Use fungicides like mancozeb or copper oxychloride.",
+      "prevention": "Avoid water splash and ensure good airflow."
+    },
+    "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+      "description": "Viral infection spread by whiteflies causing leaf curl and yellowing.",
+      "treatment": "Remove infected plants; control whitefly population.",
+      "prevention": "Use yellow sticky traps and virus-free seedlings."
+    },
+    "Tomato___Tomato_mosaic_virus": {
+      "description": "Viral disease that causes mottled and distorted leaves.",
+      "treatment": "Remove infected plants; disinfect tools.",
+      "prevention": "Avoid tobacco use around plants; practice crop rotation."
+    },
+    "Tomato___healthy": {
+      "description": "No disease or pest damage visible on the plant.",
+      "treatment": "None needed.",
+      "prevention": "Regular inspection and proper nutrition."
+    }
+  }
+  
