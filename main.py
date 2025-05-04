@@ -10,6 +10,49 @@ import os
 import pandas as pd
 from io import BytesIO
 from PIL import Image
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from io import BytesIO
+from PIL import Image
+
+def generate_pdf(results_data):
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    for entry in results_data:
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(40, height - 50, f"Image: {entry['filename']}")
+
+        y = height - 80
+        for model, pred in entry["predictions"].items():
+            c.setFont("Helvetica", 11)
+            c.drawString(60, y, f"{model}: {pred['label']} ({pred['confidence']*100:.2f}%)")
+            y -= 20
+
+        # Original image
+        img = Image.open(entry["image_path"])
+        img = img.resize((256, 256))
+        img_buffer = BytesIO()
+        img.save(img_buffer, format="PNG")
+        img_buffer.seek(0)
+        c.drawImage(ImageReader(img_buffer), 40, y - 270, width=150, height=150)
+
+        # Grad-CAM (optional)
+        if "gradcam" in entry:
+            grad_img = Image.open(entry["gradcam"])
+            grad_img = grad_img.resize((256, 256))
+            grad_buffer = BytesIO()
+            grad_img.save(grad_buffer, format="PNG")
+            grad_buffer.seek(0)
+            c.drawImage(ImageReader(grad_buffer), 200, y - 270, width=150, height=150)
+
+        c.showPage()  # next page
+
+    c.save()
+    buffer.seek(0)
+    return buffer
 
 # Load disease info JSON
 with open("disease_info.json", "r") as f:
@@ -33,9 +76,9 @@ MODEL_INPUT_SIZES = {
 
 # Grad-CAM layer names
 GRAD_CAM_LAYERS = {
-    "CNN (Default)": "conv2d",
-    "EfficientNetB3 (Transfer Learning)": "top_conv",
-    "VGG16 (Transfer Learning)": "block5_conv3",
+    "CNN (Default)": "dense_1",
+    "EfficientNetB3 (Transfer Learning)": "efficientnetb3",
+    "VGG16 (Transfer Learning)": "global_average_pooling2d",
     "ResNet50 (Transfer Learning)": "conv5_block3_out"
 }
 
@@ -149,11 +192,13 @@ elif app_mode == "Disease Recognition":
 
                 st.subheader("🧠 Grad-CAM Explanation")
                 try:
-                    last_conv_layer = GRAD_CAM_LAYERS.get(model_choice, "conv2d")
+                    last_conv_layer = GRAD_CAM_LAYERS.get(model_choice, "conv2d_9")
                     heatmap = make_gradcam_heatmap(input_arr, model, last_conv_layer)
                     display_gradcam(input_arr, heatmap, pil_img)
                 except Exception as e:
+                    print(model.summary())
                     st.warning(f"⚠️ Grad-CAM failed: {e}")
+                
 
 # Evaluation
 elif app_mode == "Evaluation":
@@ -278,6 +323,30 @@ elif app_mode == "Model Comparison":
                 display_gradcam(input_arr, heatmap, pil_img)
             except Exception as e:
                 st.warning(f"Grad-CAM failed for {model_name}: {e}")
+        
+        # PDF Download section (after Grad-CAM visualization)
+        st.subheader("📄 Download PDF Report")
+        pdf_data = []
+        for i, img in enumerate(uploaded_files):
+            predictions = {}
+            for model_name in selected_models:
+                pred_label = results[i][model_name].split('(')[0].strip()  # Extract label
+                confidence = float(results[i][model_name].split('(')[1].replace("%)", "").strip()) / 100.0  # Extract confidence
+                predictions[model_name] = {"label": pred_label, "confidence": confidence}
+            
+            # If Grad-CAM exists
+            gradcam_image_path = f"/path/to/gradcam/{img.name}"  # Adjust to your path
+            pdf_data.append({
+                "filename": img.name,
+                "image_path": img,
+                "predictions": predictions,
+                "gradcam": gradcam_image_path  # Optional Grad-CAM image path
+            })
+
+        # Generate and offer PDF download
+        pdf_file = generate_pdf(pdf_data)
+        st.download_button("📄 Download PDF Report", data=pdf_file, file_name="model_comparison_report.pdf", mime="application/pdf")
+
 
 
 # Footer
