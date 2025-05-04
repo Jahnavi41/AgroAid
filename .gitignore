@@ -1,3 +1,4 @@
 # Ignore Keras models
-*.keras
-models/
+*.keras 
+*.h5 
+*.pth
